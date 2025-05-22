@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="bg-white p-6 rounded shadow-md text-center">
+    <h3 class="text-2xl font-semibold mb-4 text-gray-800">
+        Hi {{ user.username }}, Welcome to your dashboard
+    </h3>
+
+    <!-- Logout form -->
+    <form method="post" action="{% url 'logout' %}" class="mt-4">
+        {% csrf_token %}
+        <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+            Logout
+        </button>
+    </form>
+</div>
+{% endblock %}
