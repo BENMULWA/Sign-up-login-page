@@ -37,22 +37,22 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',  # REQUIRED for allauth
+    'django.contrib.sites', # django sites
 
     # Your app
     'base_login',
     'widget_tweaks',
 
-    # Allauth
+    # social application to login backend 
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    'allauth.socialaccount.providers.google'
 
-    # Social providers
-    'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.github',
+
 ]
 
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -63,8 +63,11 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    # Allauth Middleware (add it here)
+       # Add this middleware as required by allauth:
     'allauth.account.middleware.AccountMiddleware',
+
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'demo_login.urls'
@@ -91,11 +94,8 @@ TEMPLATES = [
     },
 ]
 
-SITE_ID = 1
 
-AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',)
+
 
 WSGI_APPLICATION = 'demo_login.wsgi.application'
 
