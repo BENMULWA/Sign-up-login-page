@@ -4,12 +4,15 @@ from passlib.context import CryptContext
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# User registration schema
 class User(BaseModel):
     username: str = Field(..., alias="Username")
     email: EmailStr = Field(..., alias="Email")
     password: str = Field(..., alias="Password")
+
+    class Config:
+        allow_population_by_field_name = True  # Optional, but useful
+        allow_population_by_alias = True       # Required for alias support
+
 
 # User model for storing in DB (optional ID + hashed password)
 class UserInDB(User):

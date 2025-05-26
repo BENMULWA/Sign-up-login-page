@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.views.decorators.http import require_GET
-
+import requests
 # renders to home page if user was succeful login 
 @login_required
 def home(request):
@@ -21,42 +21,60 @@ def register_view(request):
         password = request.POST.get('password')
         confirm_password = request.POST.get('confirm_password')
 
-        if not all([username, email, password, confirm_password]):
-            messages.error(request, "All fields are required.")
-            return render(request, 'registration/register.html')
-
         if password != confirm_password:
-            messages.error(request, 'Passwords do not match.')
+            messages.error(request, "Passwords do not match.")
             return render(request, 'registration/register.html')
 
-        if User.objects.filter(username=username).exists():
-            messages.error(request, 'Username already exists.')
-            return render(request, 'registration/register.html')
-        else:
-         user = User.objects.create_user(username=username, email=email, password=password)
-         user.save()
-         messages.success(request, 'Registration successful. Please log in.')
-         return redirect('login')
+        try:
+            response = requests.post(
+                f"{FASTAPI_BASE_URL}/register",
+                json={
+                    "Username": username,
+                    "Email": email,
+                    "Password": password
+                },
+                timeout=5
+            )
+
+            if response.status_code == 200:
+                messages.success(request, "Registration successful. Please log in.")
+                return redirect('login')
+            else:
+                messages.error(request, response.json().get("detail", "Registration failed."))
+
+        except requests.exceptions.RequestException:
+            messages.error(request, "Unable to reach backend API.")
 
     return render(request, 'registration/register.html')
 
 
+FASTAPI_BASE_URL = "http://localhost:8000/api/v1"
 
 #handling user login credentials with django authentication and gets the credentials from POST request and if they valid logins redirectshe user to home , otherwise an error
 
 def login_view(request):
     if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
-
+        email = request.POST.get('email', '').strip()
         password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
 
-        if user is not None:
-            login(request, user)
-            return redirect('home') # redirects home after login
-        else:
-            messages.error(request,"Invalid username or Password")
-    return render(request,'registration/login.html')
+        try:
+            response = requests.post(
+                f"{FASTAPI_BASE_URL}/login",
+                json={"email": email, "password": password},
+                timeout=5
+            )
+
+            if response.status_code == 200:
+                user_data = response.json()
+                request.session['user_email'] = user_data.get("email")
+                return render(request, 'home.html', {"user_email": email})
+            else:
+                messages.error(request, "Invalid credentials")
+
+        except requests.exceptions.RequestException as e:
+            messages.error(request, "Failed to connect to authentication server")
+
+    return render(request, 'registration/login.html')
 
 # defines logiout and redirects user back again to login page
 

@@ -1,16 +1,45 @@
-{% extends 'base.html' %}
+<!-- /home/joel/demo_login/templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}My App{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col">
 
-{% block content %}
-<div class="bg-white p-6 rounded shadow-md text-center">
-    <h3 class="text-2xl font-semibold mb-4 text-gray-800">
-        Hi {{ user.username }}, Welcome to your dashboard
-    </h3>
+  <!-- Navbar (optional) -->
+  <header class="bg-white shadow-md py-4">
+    <div class="container mx-auto px-4 flex justify-between items-center">
+      <h1 class="text-xl font-bold text-blue-600">My App</h1>
+      {% if user.is_authenticated %}
+        <div class="text-sm">
+          Welcome, <span class="font-medium">{{ user.username }}</span>
+        </div>
+      {% endif %}
+    </div>
+  </header>
 
-    <form method="post" action="{% url 'logout' %}" class="mt-4">
-        {% csrf_token %}
-        <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-            Logout
-        </button>
-    </form>
-</div>
-{% endblock %}
+  <!-- Main Content -->
+  <main class="flex-grow container mx-auto px-4 py-8 fade-in">
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t py-4 text-center text-sm text-gray-500">
+    &copy; {{ now|date:"Y" }} My App. All rights reserved.
+  </footer>
+
+</body>
+</html>

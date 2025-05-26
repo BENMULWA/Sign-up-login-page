@@ -4,21 +4,21 @@ from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from models import User, LoginRequest, hash_password, verify_password
 
-# ✅ Lifespan decorator properly used
+#  Lifespan decorator properly used
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await startup_db_client(app)
     yield
     await shutdown_db_client(app)
 
-# ✅ MongoDB Connection Setup
+#  MongoDB Connection Setup
 async def startup_db_client(app):
     app.mongodb_client = AsyncIOMotorClient(
         "mongodb+srv://mulwabenard9507:benard9507@cluster0.xad7ngd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
     )
     app.mongodb = app.mongodb_client.get_database("signin_login_page")  # ✅ Use valid name
 
-    collections_to_create = ["logins", "users"]  # ✅ Ensure 'users' collection exists
+    collections_to_create = ["logins", "users"]  #  Ensure 'users' collection exists
     existing_collections = await app.mongodb.list_collection_names()
 
     for collection_name in collections_to_create:
@@ -30,20 +30,20 @@ async def startup_db_client(app):
     
     print("MongoDB connected.")
 
-# ✅ Clean shutdown
+#  Clean shutdown
 async def shutdown_db_client(app):
     app.mongodb_client.close()
     print("Database disconnected.")
 
-# ✅ Create FastAPI app
+#  Create FastAPI app
 app = FastAPI(lifespan=lifespan)
 
-# ✅ Root endpoint
+# Root endpoint
 @app.get("/")
 def read_root():
     return {"message": "Welcome to my login page authentication"}
 
-# ✅ Register Endpoint
+#  Register Endpoint
 @app.post("/api/v1/register", response_model=dict)
 async def register_user(user: User):
     existing_user = await app.mongodb["users"].find_one({"Email": user.email})
@@ -56,7 +56,7 @@ async def register_user(user: User):
     result = await app.mongodb["users"].insert_one(user_dict)
     return {"message": "User registered successfully", "user_id": str(result.inserted_id)}
 
-# ✅ Login Endpoint
+# Login Endpoint
 @app.post("/api/v1/login", response_model=dict)
 async def login_user(login: LoginRequest):
     user = await app.mongodb["users"].find_one({"Email": login.email})
@@ -65,7 +65,7 @@ async def login_user(login: LoginRequest):
 
     return {"message": "Login successful", "username": user["Username"]}
 
-# ✅ Optional: View all users (for debug)
+#  Optional: View all users (for debug)
 @app.get("/api/v1/users")
 async def list_users():
     users = await app.mongodb["users"].find().to_list(length=100)
