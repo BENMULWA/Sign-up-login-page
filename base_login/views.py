@@ -1,21 +1,21 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth import login, logout
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_GET
 from django.http import HttpResponse
 import requests
-from django.contrib.auth.models import User
-# Point to your deployed FastAPI backend
-FASTAPI_BASE_URL = "https://sign-up-login-page-1.onrender.com/api/v1"
 
-# ------------------- Home View ------------------- #
+FASTAPI_BASE_URL = "https://sign-up-login-page-2.onrender.com"  # Your FastAPI backend URL
+
+# ✅ Home view
 @login_required
 def home(request):
-    return render(request, 'home.html')
+    user_email = request.session.get('user_email')
+    return render(request, 'home.html', {'user_email': user_email})
 
 
-# ------------------- Register View ------------------- #
+# ✅ Register view
 def register_view(request):
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
@@ -30,31 +30,25 @@ def register_view(request):
         try:
             response = requests.post(
                 f"{FASTAPI_BASE_URL}/register",
-                json={
-                    "Username": username,
-                    "Email": email,
-                    "Password": password
-                },
+                json={"username": username, "email": email, "password": password},
                 timeout=10
             )
 
-            if response.status_code == 200:
+            if response.status_code == 201:
                 messages.success(request, "Registration successful. Please log in.")
                 return redirect('login')
-
             else:
-                detail = response.json().get("detail", "Registration failed.")
+                data = response.json()
+                detail = data.get("detail") or data.get("message") or "Registration failed."
                 messages.error(request, detail)
 
-        except requests.exceptions.RequestException:
-            messages.error(request, "Unable to reach backend API.")
+        except requests.exceptions.RequestException as e:
+            messages.error(request, f"Unable to reach backend API: {e}")
 
     return render(request, 'registration/register.html')
 
 
-# ------------------- Login View ------------------- #
-FASTAPI_BASE_URL = "https://your-fastapi-url.com/api/v1"
-
+# ✅ Login view
 def login_view(request):
     if request.method == 'POST':
         email = request.POST.get('email', '').strip()
@@ -64,40 +58,30 @@ def login_view(request):
             response = requests.post(
                 f"{FASTAPI_BASE_URL}/login",
                 json={"email": email, "password": password},
-                timeout=5
+                timeout=10
             )
 
             if response.status_code == 200:
                 user_data = response.json()
-                username = user_data.get("username")
-
-                # Ensure user exists in Django DB
-                user, created = User.objects.get_or_create(
-                    username=username,
-                    defaults={"email": email}
-                )
-
-                # Optionally, update password in Django DB (not used for FastAPI login)
-                user.set_unusable_password()
-                user.save()
-
-                login(request, user)  # Django login
+                request.session['user_email'] = user_data.get("email")
+                messages.success(request, f"Welcome back, {user_data.get('username', 'User')}!")
                 return redirect('home')
-
             else:
-                error_message = response.json().get("detail", "Login failed")
-                messages.error(request, error_message)
+                detail = response.json().get("detail", "Invalid credentials")
+                messages.error(request, detail)
 
-        except requests.exceptions.RequestException:
-            messages.error(request, "Could not connect to authentication server.")
+        except requests.exceptions.RequestException as e:
+            messages.error(request, f"Failed to connect to authentication server: {e}")
 
     return render(request, 'registration/login.html')
 
 
-# ------------------- Logout View ------------------- #
+# ✅ Logout view
 @require_GET
 def logout_view(request):
     logout(request)
+    request.session.flush()
+    messages.info(request, "You have been logged out.")
     return redirect('login')
 
 
@@ -105,11 +89,14 @@ def logout_view(request):
 from django.core.mail import send_mail
 
 def test_email(request):
-    send_mail(
-        subject='Test Email',
-        message='This is a test email from Django.',
-        from_email='mamlakawallet1234@gmail.com',  # Match your EMAIL_HOST_USER in settings.py
-        recipient_list=['mulwabenard9507@gmail.com'],  # Replace with your test recipient
-        fail_silently=False
-    )
-    return HttpResponse('Test email sent!')
+    try:
+        send_mail(
+            subject='Test Email',
+            message='This is a test email from Django.',
+            from_email='mamlakawallet1234@gmail.com',
+            recipient_list=['mulwabenard9507@gmail.com'],
+            fail_silently=False
+        )
+        return HttpResponse('✅ Test email sent!')
+    except Exception as e:
+        return HttpResponse(f'Failed to send email: {str(e)}')

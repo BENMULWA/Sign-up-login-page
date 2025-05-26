@@ -172,3 +172,5 @@ EMAIL_HOST_PASSWORD = 'your-gmail-app-password'
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # default
 ]
+
+FASTAPI_BASE_URL = "https://sign-up-login-page-2.onrender.com/api/v1"

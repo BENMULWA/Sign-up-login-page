@@ -1,74 +1,81 @@
 from fastapi import FastAPI, HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient
 from contextlib import asynccontextmanager
-from pydantic import BaseModel
 from models import User, LoginRequest, hash_password, verify_password
 
-#  Lifespan decorator properly used
+# ✅ MongoDB connection lifecycle
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await startup_db_client(app)
     yield
     await shutdown_db_client(app)
 
-#  MongoDB Connection Setup
+# ✅ MongoDB connection setup
 async def startup_db_client(app):
     app.mongodb_client = AsyncIOMotorClient(
         "mongodb+srv://mulwabenard9507:benard9507@cluster0.xad7ngd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
     )
-    app.mongodb = app.mongodb_client.get_database("signin_login_page")  # ✅ Use valid name
+    app.mongodb = app.mongodb_client.get_database("signin_login_page")
 
-    collections_to_create = ["logins", "users"]  #  Ensure 'users' collection exists
-    existing_collections = await app.mongodb.list_collection_names()
+    collections = ["users", "logins"]
+    existing = await app.mongodb.list_collection_names()
 
-    for collection_name in collections_to_create:
-        if collection_name not in existing_collections:
-            await app.mongodb.create_collection(collection_name)
-            print(f"{collection_name} collection created.")
+    for name in collections:
+        if name not in existing:
+            await app.mongodb.create_collection(name)
+            print(f"Created collection: {name}")
         else:
-            print(f"{collection_name} collection already exists.")
-    
-    print("MongoDB connected.")
+            print(f"Collection '{name}' already exists.")
+    print("✅ MongoDB connected.")
 
-#  Clean shutdown
+# ✅ MongoDB shutdown
 async def shutdown_db_client(app):
     app.mongodb_client.close()
-    print("Database disconnected.")
+    print("🔌 Database connection closed.")
 
-#  Create FastAPI app
-app = FastAPI(lifespan=lifespan)
+# ✅ Create FastAPI app
+app = FastAPI(title="Login/Register API", version="1.0", lifespan=lifespan)
 
-# Root endpoint
+# ✅ Health check
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to my login page authentication"}
+    return {"message": "Welcome to the Login/Register API"}
 
-#  Register Endpoint
-@app.post("/api/v1/register", response_model=dict)
+# ✅ Registration endpoint
+@app.post("/register", status_code=201)
 async def register_user(user: User):
-    existing_user = await app.mongodb["users"].find_one({"Email": user.email})
-    if existing_user:
+    existing = await app.mongodb["users"].find_one({"email": user.email})
+    if existing:
         raise HTTPException(status_code=400, detail="User already registered with this email.")
 
-    user_dict = user.dict(by_alias=True)
-    user_dict["Password"] = hash_password(user_dict["Password"])
+    hashed_pw = hash_password(user.password)
+    user_data = {
+        "username": user.username,
+        "email": user.email,
+        "hashed_password": hashed_pw
+    }
 
-    result = await app.mongodb["users"].insert_one(user_dict)
+    result = await app.mongodb["users"].insert_one(user_data)
     return {"message": "User registered successfully", "user_id": str(result.inserted_id)}
 
-# Login Endpoint
-@app.post("/api/v1/login", response_model=dict)
+# ✅ Login endpoint
+@app.post("/login")
 async def login_user(login: LoginRequest):
-    user = await app.mongodb["users"].find_one({"Email": login.email})
-    if not user or not verify_password(login.password, user["Password"]):
+    user = await app.mongodb["users"].find_one({"email": login.email})
+    if not user or not verify_password(login.password, user.get("hashed_password")):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    return {"message": "Login successful", "username": user["Username"]}
+    return {
+        "message": "Login successful",
+        "username": user["username"],
+        "email": user["email"]
+    }
 
-#  Optional: View all users (for debug)
-@app.get("/api/v1/users")
+# ✅ Optional: View all users (debug only!)
+@app.get("/users")
 async def list_users():
     users = await app.mongodb["users"].find().to_list(length=100)
     for user in users:
         user["_id"] = str(user["_id"])
+        user.pop("hashed_password", None)
     return {"users": users}
