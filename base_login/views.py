@@ -5,6 +5,8 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_GET
 from django.http import HttpResponse
 import requests
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login
 
 FASTAPI_BASE_URL = "https://sign-up-login-page-2.onrender.com"  # Your FastAPI backend URL
 
@@ -62,12 +64,24 @@ def login_view(request):
                 json={"email": email, "password": password},
                 timeout=15
             )
-
             if response.status_code == 200:
                 user_data = response.json()
+
+                # Check if user exists in Django, if not, create one
+                user, created = User.objects.get_or_create(
+                    username=user_data.get("username"),
+                    defaults={"email": user_data.get("email")}
+                )
+
+                # Log them in using Django's auth system
+                login(request, user)
+
+                # Save session info
                 request.session['user_email'] = user_data.get("email")
-                messages.success(request, f"Welcome back, {user_data.get('username', 'User')}!")
+
+                messages.success(request, f"Welcome back, {user.username}!")
                 return redirect('home')
+
             else:
                 detail = response.json().get("detail", "Invalid credentials")
                 messages.error(request, detail)

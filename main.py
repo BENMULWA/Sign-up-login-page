@@ -26,7 +26,7 @@ async def startup_db_client(app):
             print(f"Created collection: {name}")
         else:
             print(f"Collection '{name}' already exists.")
-    print("✅ MongoDB connected.")
+    print(" MongoDB connected.")
 
 #  MongoDB shutdown
 async def shutdown_db_client(app):
