@@ -58,12 +58,17 @@ def login_view(request):
         email = request.POST.get('email', '').strip()
         password = request.POST.get('password')
 
+        print(f"Attempting login with email: {email}")
+
         try:
             response = requests.post(
                 f"{FASTAPI_BASE_URL}/login",
                 json={"email": email, "password": password},
                 timeout=15
             )
+
+            print(f"fastAPI response code: {response.status_code}")
+            print(f"FastAPI response body: {response.text}")
             if response.status_code == 200:
                 user_data = response.json()
 
@@ -75,6 +80,13 @@ def login_view(request):
 
                 # Log them in using Django's auth system
                 login(request, user)
+
+                print(f"Logged in user: {user.username}, is_authenticated: {request.user.is_authenticated}")
+
+                print(f"Redirecting to home for: {user.username}")
+
+
+
 
                 # Save session info
                 request.session['user_email'] = user_data.get("email")
