@@ -8,14 +8,14 @@ import requests
 
 FASTAPI_BASE_URL = "https://sign-up-login-page-2.onrender.com"  # Your FastAPI backend URL
 
-# ✅ Home view
+#  Home view
 @login_required
 def home(request):
     user_email = request.session.get('user_email')
     return render(request, 'home.html', {'user_email': user_email})
 
 
-# ✅ Register view
+#  Register view
 def register_view(request):
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
@@ -29,8 +29,12 @@ def register_view(request):
 
         try:
             response = requests.post(
-                f"{FASTAPI_BASE_URL}/register",
-                json={"username": username, "email": email, "password": password},
+                "https://sign-up-login-page-3.onrender.com/register",  
+                json={
+                    "username": username,  #lowercase
+                    "email": email,
+                    "password": password
+                },
                 timeout=10
             )
 
@@ -38,17 +42,15 @@ def register_view(request):
                 messages.success(request, "Registration successful. Please log in.")
                 return redirect('login')
             else:
-                data = response.json()
-                detail = data.get("detail") or data.get("message") or "Registration failed."
+                detail = response.json().get("detail", "Registration failed.")
                 messages.error(request, detail)
 
-        except requests.exceptions.RequestException as e:
-            messages.error(request, f"Unable to reach backend API: {e}")
+        except requests.exceptions.RequestException:
+            messages.error(request, "Unable to reach backend API.")
 
     return render(request, 'registration/register.html')
 
-
-# ✅ Login view
+# Login view
 def login_view(request):
     if request.method == 'POST':
         email = request.POST.get('email', '').strip()
@@ -58,7 +60,7 @@ def login_view(request):
             response = requests.post(
                 f"{FASTAPI_BASE_URL}/login",
                 json={"email": email, "password": password},
-                timeout=10
+                timeout=15
             )
 
             if response.status_code == 200:
@@ -76,7 +78,7 @@ def login_view(request):
     return render(request, 'registration/login.html')
 
 
-# ✅ Logout view
+# Logout view
 @require_GET
 def logout_view(request):
     logout(request)
@@ -85,7 +87,7 @@ def logout_view(request):
     return redirect('login')
 
 
-# ✅ Test email functionality
+# Test email functionality
 from django.core.mail import send_mail
 
 def test_email(request):
@@ -97,6 +99,6 @@ def test_email(request):
             recipient_list=['mulwabenard9507@gmail.com'],
             fail_silently=False
         )
-        return HttpResponse('✅ Test email sent!')
+        return HttpResponse('Test email sent!')
     except Exception as e:
         return HttpResponse(f'Failed to send email: {str(e)}')
