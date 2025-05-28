@@ -13,6 +13,8 @@ from fastapi_app.main import app as fastapi_app  # <-- Replace with your actual 
 # Create the root FastAPI app
 main_app = FastAPI()
 
+origins = ["http://localhost:8000", "https://sign-up-login-page-9.onrender.com"]
+
 # Enable CORS for API
 main_app.add_middleware(
     CORSMiddleware,

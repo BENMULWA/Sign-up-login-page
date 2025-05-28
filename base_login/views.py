@@ -92,7 +92,7 @@ def login_view(request):
                 request.session['user_email'] = user_data.get("email")
 
                 messages.success(request, f"Welcome back, {user.username}!")
-                return redirect('/home/')
+                return redirect('home')
 
             else:
                 detail = response.json().get("detail", "Invalid credentials")
