@@ -7,8 +7,9 @@ from django.http import HttpResponse
 import requests
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
+from django.urls import reverse
 
-FASTAPI_BASE_URL = "https://sign-up-login-page-2.onrender.com"  # Your FastAPI backend URL
+FASTAPI_BASE_URL = "https://sign-up-login-page-10.onrender.com"  # Your FastAPI backend URL
 
 #  Home view
 @login_required
@@ -31,7 +32,7 @@ def register_view(request):
 
         try:
             response = requests.post(
-                "https://sign-up-login-page-3.onrender.com/register",  
+                "https://sign-up-login-page-10.onrender.com/register",  
                 json={
                     "username": username,  #lowercase
                     "email": email,
@@ -58,51 +59,49 @@ def login_view(request):
         email = request.POST.get('email', '').strip()
         password = request.POST.get('password')
 
-        print(f"Attempting login with email: {email}")
-
         try:
+            # First verify with FastAPI
             response = requests.post(
                 f"{FASTAPI_BASE_URL}/login",
                 json={"email": email, "password": password},
-                timeout=15
+                timeout=10
             )
 
-            print(f"fastAPI response code: {response.status_code}")
-            print(f"FastAPI response body: {response.text}")
             if response.status_code == 200:
                 user_data = response.json()
-
-                # Check if user exists in Django, if not, create one
+                username = user_data.get("username")
+                
+                # Get or create user with unusable password
                 user, created = User.objects.get_or_create(
-                    username=user_data.get("username"),
-                    defaults={"email": user_data.get("email")}
+                    username=username,
+                    defaults={
+                        'email': email,
+                        'password': '!',  # Set unusable password
+                        'is_active': True
+                    }
                 )
+                
+                if created:
+                    user.set_unusable_password()
+                    user.save()
 
-                # Log them in using Django's auth system
+                # Authenticate using a custom backend or just login
+                user.backend = 'django.contrib.auth.backends.ModelBackend'
                 login(request, user)
 
-                print(f"Logged in user: {user.username}, is_authenticated: {request.user.is_authenticated}")
 
-                print(f"Redirecting to home for: {user.username}")
-
-
-
-
-                # Save session info
-                request.session['user_email'] = user_data.get("email")
-
-                messages.success(request, f"Welcome back, {user.username}!")
-                return redirect('home')
+                request.session['user_email'] = email 
+                
+                next_url = request.GET.get('next') or request.POST.get('next') or 'home'
+                return redirect(next_url)
 
             else:
-                detail = response.json().get("detail", "Invalid credentials")
-                messages.error(request, detail)
-
+                messages.error(request, response.json().get("detail", "Invalid credentials"))
+                
         except requests.exceptions.RequestException as e:
-            messages.error(request, f"Failed to connect to authentication server: {e}")
+            messages.error(request, f"Service unavailable: {str(e)}")
 
     return render(request, 'registration/login.html')
-
 
 # Logout view
 @require_GET

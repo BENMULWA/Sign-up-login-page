@@ -77,6 +77,9 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/home/'
 LOGOUT_REDIRECT_URL = '/login/'
 
+SESSION_COOKIE_SECURE = False   # Set to True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True
+
 
 TEMPLATES = [
     {

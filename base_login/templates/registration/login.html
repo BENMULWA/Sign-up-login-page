@@ -83,18 +83,19 @@
     </form>
 
     <p class="mt-6 text-center text-gray-700">
-      Don’t have an account?
+      Don't have an account?
       <a href="{% url 'register' %}" class="text-blue-600 font-medium hover:underline">Register here</a>
     </p>
   </div>
 
-  <!-- JS for password toggle -->
+  <!-- JS for password toggle-->
   <script>
     function togglePassword() {
       const passwordInput = document.getElementById("password");
       const checkbox = document.getElementById("showPassword");
       passwordInput.type = checkbox.checked ? "text" : "password";
-    }
+  }
   </script>
+
 </body>
 </html>
