@@ -79,7 +79,7 @@ LOGOUT_REDIRECT_URL = '/login/'
 
 SESSION_COOKIE_SECURE = False   # Set to True in production with HTTPS
 SESSION_COOKIE_HTTPONLY = True
-
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 TEMPLATES = [
     {
@@ -176,4 +176,4 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # default
 ]
 
-FASTAPI_BASE_URL = "https://sign-up-login-page-2.onrender.com/api/v1"
+FASTAPI_BASE_URL = "https://sign-up-login-page-10.onrender.com"

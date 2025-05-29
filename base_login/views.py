@@ -95,9 +95,10 @@ def login_view(request):
                 next_url = request.GET.get('next') or request.POST.get('next') or 'home'
                 return redirect(next_url)
 
+
             else:
                 messages.error(request, response.json().get("detail", "Invalid credentials"))
-                
+                return redirect('login') 
         except requests.exceptions.RequestException as e:
             messages.error(request, f"Service unavailable: {str(e)}")
 
