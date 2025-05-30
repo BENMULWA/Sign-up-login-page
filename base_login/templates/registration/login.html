@@ -34,11 +34,6 @@
       </div>
     {% endif %}
 
-      {% if request.GET.next %}
-      <input type="hidden" name="next" value="{{ request.GET.next }}">
-      {% endif %}
-
-
     <!-- Google Login Button -->
     <a href="{% provider_login_url 'google' %}">
       <button class="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-100 mb-6">
@@ -49,6 +44,7 @@
 
     <form method="post" action="{% url 'login' %}">
       {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
 
       <!-- Email -->
       <div class="mb-5">
@@ -88,12 +84,12 @@
     </form>
 
     <p class="mt-6 text-center text-gray-700">
-      Don’t have an account?
+      Don't have an account?
       <a href="{% url 'register' %}" class="text-blue-600 font-medium hover:underline">Register here</a>
     </p>
   </div>
 
-  <!-- JS for password toggle -->
+  <!-- JS for password toggle-->
   <script>
     function togglePassword() {
       const passwordInput = document.getElementById("password");
@@ -101,5 +97,6 @@
       passwordInput.type = checkbox.checked ? "text" : "password";
     }
   </script>
+
 </body>
 </html>

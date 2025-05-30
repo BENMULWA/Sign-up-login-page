@@ -60,7 +60,7 @@ def login_view(request):
         password = request.POST.get('password')
 
         try:
-            # First verify with FastAPI
+            # Verify with FastAPI
             response = requests.post(
                 f"{FASTAPI_BASE_URL}/login",
                 json={"email": email, "password": password},
@@ -70,38 +70,38 @@ def login_view(request):
             if response.status_code == 200:
                 user_data = response.json()
                 username = user_data.get("username")
-                
-                # Get or create user with unusable password
+
                 user, created = User.objects.get_or_create(
                     username=username,
                     defaults={
                         'email': email,
-                        'password': '!',  # Set unusable password
+                        'password': '!',
                         'is_active': True
                     }
                 )
-                
+
                 if created:
                     user.set_unusable_password()
                     user.save()
 
-                # Authenticate using a custom backend or just login
                 user.backend = 'django.contrib.auth.backends.ModelBackend'
                 login(request, user)
 
+                request.session['user_email'] = email
+                request.session.modified = True
 
-                request.session['user_email'] = email 
-                
-                next_url = request.GET.get('next') or request.POST.get('next') or 'home'
+                next_url = request.GET.get('next') or request.POST.get('next') or reverse('home')
                 return redirect(next_url)
-
 
             else:
                 messages.error(request, response.json().get("detail", "Invalid credentials"))
-                return redirect('login') 
+                return redirect('login')
+
         except requests.exceptions.RequestException as e:
             messages.error(request, f"Service unavailable: {str(e)}")
+            return redirect('login')  # Add return here
 
+    # If not POST or login fails, show the login form
     return render(request, 'registration/login.html')
 
 # Logout view

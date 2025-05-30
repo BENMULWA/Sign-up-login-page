@@ -74,7 +74,7 @@ ROOT_URLCONF = 'demo_login.urls'
 
 
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/home/'
+LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = '/login/'
 
 SESSION_COOKIE_SECURE = False   # Set to True in production with HTTPS
